@@ -43,7 +43,10 @@ jobs:
         uses: azure/setup-helm@v5
 
       - name: Render default values
-        run: helm template uptime-private-location charts/uptime-private-location > rendered-default.yaml
+        run: |
+          helm template uptime-private-location charts/uptime-private-location \
+            --set apiToken.value=fake-token-for-ci \
+            > rendered-default.yaml
 
       - name: Render StatefulSet + persistence + service
         run: |
