@@ -84,7 +84,7 @@ jobs:
 
       - name: Log in to GHCR (oras)
         run: |
-          echo "${{ secrets.RELEASE_TOKEN || secrets.GITHUB_TOKEN }}" \
+          echo "${{ secrets.GITHUB_TOKEN }}" \
             | oras login ghcr.io \
                 --username "${{ github.actor }}" \
                 --password-stdin
