@@ -1,3 +1,9 @@
+## [1.0.1](https://github.com/gxben/uptime-private-location-chart/compare/v1.0.0...v1.0.1) (2026-08-10)
+
+### Bug Fixes
+
+* **main:** fix github actions ([67e9abc](https://github.com/gxben/uptime-private-location-chart/commit/67e9abc332b2388e4af6f82db9ff3a9e55770a0a))
+
 ## 1.0.0 (2026-08-10)
 
 ### Bug Fixes
