@@ -167,9 +167,11 @@ determines the next version from conventional commits, updates
 `CHANGELOG.md`, creates a GitHub Release, and publishes the chart as an OCI
 artifact to `ghcr.io/gxben/charts/uptime-private-location`.
 
-> **Note**: set `RELEASE_TOKEN` in repository secrets (PAT with
-> `contents: write`) so semantic-release can push the CHANGELOG commit back
-> to `main` when branch protection is enabled.
+> **Note**: set `RELEASE_TOKEN` in repository secrets — a classic PAT with
+> both `contents: write` (so semantic-release can push the CHANGELOG commit
+> back to `main` when branch protection is enabled) and `write:packages`
+> (GHCR rejects the ArtifactHub metadata push with `GITHUB_TOKEN`, since it
+> only auto-grants write for well-known OCI artifact types).
 
 ## License
 

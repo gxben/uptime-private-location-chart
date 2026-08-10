@@ -83,8 +83,15 @@ jobs:
             "oci://ghcr.io/${{ github.repository_owner }}/charts"
 
       - name: Log in to GHCR (oras)
+        # GITHUB_TOKEN's automatic packages:write only covers well-known OCI
+        # artifact types (containers, Helm charts). GHCR denies it with
+        # "permission_denied: write_package" for the custom ArtifactHub
+        # metadata artifact type pushed below, even against the same package
+        # right after a successful helm push. RELEASE_TOKEN must be a classic
+        # PAT with the write:packages scope (in addition to contents:write)
+        # for this step to succeed.
         run: |
-          echo "${{ secrets.GITHUB_TOKEN }}" \
+          echo "${{ secrets.RELEASE_TOKEN || secrets.GITHUB_TOKEN }}" \
             | oras login ghcr.io \
                 --username "${{ github.actor }}" \
                 --password-stdin
