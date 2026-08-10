@@ -23,7 +23,8 @@ jobs:
 
       - uses: actions/setup-python@v6
         with:
-          python-version: "3.x"
+          # ct bundles yamale, which doesn't yet support 3.13+ (ast.Num removed).
+          python-version: "3.12"
 
       - name: Install chart-testing
         uses: helm/chart-testing-action@v2.7.0
