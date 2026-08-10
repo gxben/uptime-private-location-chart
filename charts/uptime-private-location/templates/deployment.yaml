@@ -1,0 +1,29 @@
+{{- if eq .Values.kind "Deployment" }}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "uptime-private-location.fullname" . }}
+  labels:
+    app: {{ include "uptime-private-location.fullname" . }}
+    {{- include "uptime-private-location.labels" . | nindent 4 }}
+spec:
+  replicas: {{ .Values.replicaCount }}
+  selector:
+    matchLabels:
+      app: {{ include "uptime-private-location.fullname" . }}
+      {{- include "uptime-private-location.selectorLabels" . | nindent 6 }}
+  template:
+    metadata:
+      labels:
+        app: {{ include "uptime-private-location.fullname" . }}
+        {{- include "uptime-private-location.selectorLabels" . | nindent 8 }}
+        {{- with .Values.podLabels }}
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
+      {{- with .Values.podAnnotations }}
+      annotations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+    spec:
+      {{- include "uptime-private-location.podSpec" . | nindent 6 }}
+{{- end }}

@@ -1,0 +1,19 @@
+{{- if and .Values.persistence.enabled (eq .Values.kind "Deployment") }}
+{{- range $name, $cfg := dict "nagios-var" .Values.persistence.nagiosVar "uptime-var" .Values.persistence.uptimeVar "uptime-logs" .Values.persistence.uptimeLogs }}
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: {{ include "uptime-private-location.fullname" $ }}-{{ $name }}
+  labels:
+    {{- include "uptime-private-location.labels" $ | nindent 4 }}
+spec:
+  accessModes: {{ toYaml $.Values.persistence.accessModes | nindent 4 }}
+  {{- if $.Values.persistence.storageClassName }}
+  storageClassName: {{ $.Values.persistence.storageClassName | quote }}
+  {{- end }}
+  resources:
+    requests:
+      storage: {{ $cfg.size }}
+{{- end }}
+{{- end }}

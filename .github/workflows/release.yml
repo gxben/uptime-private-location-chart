@@ -1,0 +1,99 @@
+name: Trigger Release
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  issues: write
+  pull-requests: write
+  packages: write
+
+jobs:
+  release:
+    name: Create Release
+    runs-on: ubuntu-latest
+    outputs:
+      new_release_published: ${{ steps.semantic.outputs.new_release_published }}
+      new_release_version: ${{ steps.semantic.outputs.new_release_version }}
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+          # Use a PAT or GitHub App token so semantic-release can push the
+          # CHANGELOG commit back to main even when branch protection is on.
+          # Set RELEASE_TOKEN in repository secrets; falls back to GITHUB_TOKEN.
+          token: ${{ secrets.RELEASE_TOKEN || secrets.GITHUB_TOKEN }}
+
+      - name: Install Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: 24
+
+      - name: Install semantic-release plugins
+        run: |
+          npm install \
+            @semantic-release/changelog@6 \
+            @semantic-release/git@10 \
+            conventional-changelog-conventionalcommits@9
+
+      - name: Run semantic-release
+        id: semantic
+        uses: cycjimmy/semantic-release-action@v6
+        with:
+          semantic_version: 24
+        env:
+          GITHUB_TOKEN: ${{ secrets.RELEASE_TOKEN || secrets.GITHUB_TOKEN }}
+
+      - name: Debug release output
+        run: |
+          echo "Published : ${{ steps.semantic.outputs.new_release_published }}"
+          echo "Version   : ${{ steps.semantic.outputs.new_release_version }}"
+
+  helm:
+    name: Publish Helm chart
+    needs: release
+    if: needs.release.outputs.new_release_published == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: v${{ needs.release.outputs.new_release_version }}
+
+      - name: Install Helm
+        uses: azure/setup-helm@v5
+
+      - name: Log in to GHCR (OCI)
+        run: |
+          echo "${{ secrets.GITHUB_TOKEN }}" \
+            | helm registry login ghcr.io \
+                --username "${{ github.actor }}" \
+                --password-stdin
+
+      - name: Install oras
+        uses: oras-project/setup-oras@v2
+
+      - name: Package and push chart
+        run: |
+          VERSION="${{ needs.release.outputs.new_release_version }}"
+          helm package charts/uptime-private-location \
+            --version "${VERSION}" \
+            --app-version "${VERSION}"
+          helm push "uptime-private-location-${VERSION}.tgz" \
+            "oci://ghcr.io/${{ github.repository_owner }}/charts"
+
+      - name: Log in to GHCR (oras)
+        run: |
+          echo "${{ secrets.RELEASE_TOKEN || secrets.GITHUB_TOKEN }}" \
+            | oras login ghcr.io \
+                --username "${{ github.actor }}" \
+                --password-stdin
+
+      - name: Push ArtifactHub repository metadata
+        run: |
+          VERSION="${{ needs.release.outputs.new_release_version }}"
+          printf 'version: "%s"\n' "${VERSION}" > /tmp/ah-config.yaml
+          oras push \
+            "ghcr.io/${{ github.repository_owner }}/charts:artifacthub.io" \
+            --config /tmp/ah-config.yaml:application/vnd.cncf.artifacthub.config.v1+yaml \
+            "artifacthub-repo.yml:application/vnd.cncf.artifacthub.repository-metadata.layer.v1.yaml"

@@ -1,0 +1,30 @@
+Uptime.com Private Location is being deployed.
+
+  Workload kind: {{ .Values.kind }}
+  Image:         {{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}
+  Replicas:      {{ .Values.replicaCount }}
+
+A few things to know:
+
+1. Each running probe needs its own UPTIME_API_TOKEN. If you scaled
+   replicaCount > 1 with a single token, only one pod will register correctly.
+   For multiple probes, use kind=StatefulSet with apiToken.perReplica, or
+   install this chart once per probe with a different release name.
+
+2. Upstream recommends NOT using HTTP healthchecks against the probe.
+   Use Heartbeat checks from the Uptime.com UI instead. The chart leaves
+   liveness/readiness probes disabled by default.
+
+3. Resource sizing matters. Chrome-based transaction checks fail under
+   tight CPU. Keep UPTIME_AVAILABLE_CPU_CORES aligned with resources.limits.cpu.
+
+Verify the pod started:
+
+  kubectl --namespace {{ .Release.Namespace }} get pods -l "app.kubernetes.io/instance={{ .Release.Name }}"
+
+Check logs:
+
+  kubectl --namespace {{ .Release.Namespace }} logs -l "app.kubernetes.io/instance={{ .Release.Name }}" --tail=200
+
+Once the pod is running, the new probe should appear in your Uptime.com
+account under Probe Servers > Private Locations within ~1 hour.

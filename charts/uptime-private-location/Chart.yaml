@@ -1,0 +1,24 @@
+apiVersion: v2
+name: uptime-private-location
+description: A Helm chart for the Uptime.com Private Location probe server
+type: application
+version: 0.1.0
+# appVersion should track the uptimecom/uptime-private-location image tag.
+appVersion: "5.4"
+home: https://github.com/uptime-com/uptime-private-location
+sources:
+  - https://github.com/uptime-com/uptime-private-location
+  - https://github.com/gxben/uptime-private-location-chart
+keywords:
+  - uptime
+  - monitoring
+  - private-location
+  - probe
+maintainers:
+  - name: Benjamin Zores
+    email: benjamin.zores@gmail.com
+annotations:
+  artifacthub.io/license: Apache-2.0
+  artifacthub.io/changes: |
+    - kind: added
+      description: Initial release

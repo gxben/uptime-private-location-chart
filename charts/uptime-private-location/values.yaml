@@ -1,0 +1,140 @@
+# Default values for uptime-private-location.
+
+# Number of probe replicas. Each replica needs its own UPTIME_API_TOKEN.
+# If you run more than one, install the chart multiple times instead (see README).
+replicaCount: 1
+
+image:
+  repository: uptimecom/uptime-private-location
+  pullPolicy: IfNotPresent
+  # Pin to a specific version rather than "latest" in production.
+  tag: "5.4"
+
+# imagePullSecrets to pull the image from a private registry, if needed.
+# The Uptime.com docs note the image historically lived in a private repo
+# (access requested via Support); the public docker.io/uptimecom/... image
+# typically does not require credentials.
+imagePullSecrets: []
+# - name: regcred
+
+nameOverride: ""
+fullnameOverride: ""
+
+# --- API token configuration -------------------------------------------------
+# The probe needs UPTIME_API_TOKEN. Provide it directly (the chart creates a
+# plain Kubernetes Secret) or reference a Secret you manage yourself.
+#
+# Each running probe is identified by its token, so one token = one probe.
+# To run several probes, install this chart multiple times (one release each)
+# rather than scaling replicaCount > 1.
+apiToken:
+  # Provide the token directly; the chart creates a Secret from it.
+  # Don't put real tokens in committed values files.
+  value: ""
+  # Reference a pre-existing Secret instead of the one this chart creates.
+  secretName: ""
+  secretKey: "UPTIME_API_TOKEN"
+
+# Workload kind. Deployment matches the upstream sample; StatefulSet is
+# useful when persistence is enabled and you want stable per-pod volumes.
+kind: Deployment  # Deployment | StatefulSet
+
+# --- Probe configuration -----------------------------------------------------
+# These map directly to the env vars documented in the upstream README.
+config:
+  # Set to match resources.limits.cpu. Auto-detected if empty.
+  availableCpuCores: "2"
+  # Number of Chrome instances. Rough max: 3 per CPU core + 2GB RAM each.
+  txnLimitBrowsers: "1"
+  # Optional. Override only if you know you need to.
+  txnMaxExecTime: ""   # seconds; default is usually fine
+  maxExecTime: ""      # seconds; should be slightly larger than txnMaxExecTime
+
+# Extra env vars (raw list, merged after the ones above).
+extraEnv: []
+# - name: HTTPS_PROXY
+#   value: "http://proxy.internal:3128"
+
+# --- Resources ---------------------------------------------------------------
+# Upstream recommends 2 CPU / 4GB RAM minimum for Chromium-based checks.
+resources:
+  requests:
+    cpu: "1.0"
+    memory: "2Gi"
+  limits:
+    cpu: "2.0"
+    memory: "4Gi"
+
+# --- Volumes -----------------------------------------------------------------
+# The upstream sample uses two in-memory emptyDir volumes. Switch persistence
+# on if you'd rather use PVCs for /home/uptime/var and /home/uptime/logs etc.
+ramdisk:
+  # Mounted at /dev/shm for Chromium shared memory.
+  sizeLimit: 2Gi
+tmpfs:
+  # Mounted at /home/uptime/run.
+  sizeLimit: 128Mi
+
+# Optional: persistent volumes for nagios state, uptime var, and logs.
+# Disabled by default to match the upstream sample exactly.
+persistence:
+  enabled: false
+  storageClassName: ""
+  accessModes:
+    - ReadWriteOnce
+  nagiosVar:
+    size: 2Gi
+    mountPath: /usr/local/nagios/var
+  uptimeVar:
+    size: 2Gi
+    mountPath: /home/uptime/var
+  uptimeLogs:
+    size: 2Gi
+    mountPath: /home/uptime/logs
+
+# --- Service -----------------------------------------------------------------
+# The probe exposes 8443 internally (Nagios UI). Disabled by default since
+# the probe is outbound-only for normal operation.
+service:
+  enabled: false
+  type: ClusterIP
+  port: 8443
+  targetPort: 8443
+  annotations: {}
+
+# --- Pod-level settings ------------------------------------------------------
+podAnnotations: {}
+podLabels: {}
+
+# Image runs as UID 1000; do not override unless you know what you're doing.
+podSecurityContext:
+  runAsNonRoot: true
+  runAsUser: 1000
+  runAsGroup: 1000
+  fsGroup: 1000
+
+securityContext: {}
+  # capabilities:
+  #   drop: [ALL]
+  # readOnlyRootFilesystem: false
+  # allowPrivilegeEscalation: false
+
+nodeSelector: {}
+tolerations: []
+affinity: {}
+
+# Liveness/readiness probes. The upstream README explicitly recommends NOT
+# using a built-in HTTP probe and instead using Heartbeat checks from
+# Uptime.com itself. Disabled by default for that reason.
+livenessProbe:
+  enabled: false
+readinessProbe:
+  enabled: false
+
+serviceAccount:
+  create: true
+  name: ""
+  annotations: {}
+
+priorityClassName: ""
+terminationGracePeriodSeconds: 30
