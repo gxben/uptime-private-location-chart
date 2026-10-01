@@ -8,7 +8,7 @@ image:
   repository: uptimecom/uptime-private-location
   pullPolicy: IfNotPresent
   # Pin to a specific version rather than "latest" in production.
-  tag: "5.4"
+  tag: "5.5"
 
 # imagePullSecrets to pull the image from a private registry, if needed.
 # The Uptime.com docs note the image historically lived in a private repo
