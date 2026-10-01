@@ -1,3 +1,9 @@
+## [1.1.0](https://github.com/gxben/uptime-private-location-chart/compare/v1.0.2...v1.1.0) (2026-10-01)
+
+### Features
+
+* **main:** upgrade application to v5.5 ([cad2b10](https://github.com/gxben/uptime-private-location-chart/commit/cad2b10353a471a77e02f2edc97d6230c0318926))
+
 ## [1.0.2](https://github.com/gxben/uptime-private-location-chart/compare/v1.0.1...v1.0.2) (2026-08-10)
 
 ### Bug Fixes
